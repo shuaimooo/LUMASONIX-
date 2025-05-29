@@ -1,75 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>薪資查詢</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    label, input, select { display: block; margin: 10px 0; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薪資明細表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: #f0f7ff;
+        }
+        .salary-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .table-row:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .table-row:hover {
+            background-color: #e6f0ff;
+        }
+    </style>
 </head>
 <body>
-  <h2>查詢個人薪資</h2>
-  <label>姓名：
-    <input type="text" id="name" placeholder="請輸入姓名">
-  </label>
-  <label>月份：
-    <select id="month">
-      <option value="">請選擇月份</option>
-      <option value="1">1 月</option>
-      <option value="2">2 月</option>
-      <option value="3">3 月</option>
-      <option value="4">4 月</option>
-      <option value="5">5 月</option>
-      <option value="6">6 月</option>
-      <option value="7">7 月</option>
-      <option value="8">8 月</option>
-      <option value="9">9 月</option>
-      <option value="10">10 月</option>
-      <option value="11">11 月</option>
-      <option value="12">12 月</option>
-    </select>
-  </label>
-  <button onclick="fetchSalary()">查詢</button>
+    <div class="min-h-screen py-8 px-4">
+        <div class="max-w-5xl mx-auto salary-card bg-white rounded-lg overflow-hidden">
+            <div class="bg-blue-600 text-white py-4 px-6">
+                <h1 class="text-2xl font-bold text-center">薪資明細表</h1>
+            </div>
+            
+            <div class="p-6">
+                <!-- 基本資料 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">姓名</label>
+                        <input type="text" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="請輸入姓名">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">身分證</label>
+                        <input type="text" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="請輸入身分證號碼">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">職位</label>
+                        <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="" disabled selected>請選擇職位</option>
+                            <option value="高級技師">高級技師</option>
+                            <option value="技術人員">技術人員</option>
+                            <option value="工讀生">工讀生</option>
+                            <option value="行政人員">行政人員</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">薪資月份</label>
+                        <div class="px-4 py-2 border rounded-lg bg-gray-50 font-medium" id="current-month"></div>
+                    </div>
+                </div>
+                
+                <!-- 薪資明細表 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="border px-4 py-3 text-left">日期</th>
+                                <th class="border px-4 py-3 text-left">上班-下班</th>
+                                <th class="border px-4 py-3 text-left">加班</th>
+                                <th class="border px-4 py-3 text-left">補貼</th>
+                                <th class="border px-4 py-3 text-left">金額</th>
+                                <th class="border px-4 py-3 text-left">備註</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salary-details">
+                            <!-- 範例資料 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 按鈕區 -->
+                <div class="mt-8 flex justify-between">
+                    <button id="add-row" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition">
+                        新增項目
+                    </button>
+                    
+                    <div>
+                        <span class="font-bold mr-2">總計金額:</span>
+                        <span id="total-amount" class="text-xl font-bold text-blue-600">0</span> 元
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <div id="result"></div>
-
-  <script>
-    function fetchSalary() {
-      const name = document.getElementById("name").value.trim();
-      const month = document.getElementById("month").value;
-      const resultDiv = document.getElementById("result");
-
-      if (!name || !month) {
-        resultDiv.innerHTML = "<p style='color:red;'>請輸入姓名與選擇月份</p>";
-        return;
-      }
-
-      fetch(`https://script.google.com/macros/s/AKfycbwi6Xg-x5jPskXdvMntAKh6TCsQn9ihLc69VfDOJ49XKVclfowTlno0bdU5V_f-Z91W/exec?name=${encodeURIComponent(name)}&month=${month}`)
-        .then(res => res.json())
-        .then(data => {
-          if (typeof data === "string") {
-            resultDiv.innerHTML = `<p>${data}</p>`;
-          } else {
-            let html = "<table><tr>";
-            for (let key in data[0]) html += `<th>${key}</th>`;
-            html += "</tr>";
-            for (let row of data) {
-              html += "<tr>";
-              for (let key in row) html += `<td>${row[key]}</td>`;
-              html += "</tr>";
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 顯示當月月份
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            document.getElementById('current-month').textContent = `${year} 年 ${month} 月`;
+            
+            // 範例資料
+            const sampleData = [
+                { date: '2023-11-01', time: '09:00-18:00', overtime: '1小時', allowance: '交通費', amount: 2200, note: '' },
+                { date: '2023-11-02', time: '09:00-18:00', overtime: '', allowance: '', amount: 2000, note: '' },
+                { date: '2023-11-03', time: '09:00-18:00', overtime: '2小時', allowance: '餐費', amount: 2400, note: '專案加急' }
+            ];
+            
+            // 渲染資料
+            renderSalaryDetails(sampleData);
+            updateTotal();
+            
+            // 新增項目按鈕
+            document.getElementById('add-row').addEventListener('click', function() {
+                addNewRow();
+            });
+            
+            // 新增空白行
+            function addNewRow() {
+                const tbody = document.getElementById('salary-details');
+                const tr = document.createElement('tr');
+                tr.className = 'table-row';
+                
+                tr.innerHTML = `
+                    <td class="border px-4 py-2">
+                        <input type="date" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="updateTotal()">
+                    </td>
+                    <td class="border px-4 py-2">
+                        <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="09:00-18:00">
+                    </td>
+                    <td class="border px-4 py-2">
+                        <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="小時數">
+                    </td>
+                    <td class="border px-4 py-2">
+                        <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="補貼項目">
+                    </td>
+                    <td class="border px-4 py-2">
+                        <input type="number" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="0" onchange="updateTotal()">
+                    </td>
+                    <td class="border px-4 py-2">
+                        <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="備註">
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
             }
-            html += "</table>";
-            resultDiv.innerHTML = html;
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          resultDiv.innerHTML = "<p style='color:red;'>查詢失敗，請稍後再試。</p>";
+            
+            // 渲染薪資明細
+            function renderSalaryDetails(data) {
+                const tbody = document.getElementById('salary-details');
+                tbody.innerHTML = '';
+                
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'table-row';
+                    
+                    tr.innerHTML = `
+                        <td class="border px-4 py-2">
+                            <input type="date" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" value="${item.date}" onchange="updateTotal()">
+                        </td>
+                        <td class="border px-4 py-2">
+                            <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" value="${item.time}" placeholder="09:00-18:00">
+                        </td>
+                        <td class="border px-4 py-2">
+                            <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" value="${item.overtime}" placeholder="小時數">
+                        </td>
+                        <td class="border px-4 py-2">
+                            <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" value="${item.allowance}" placeholder="補貼項目">
+                        </td>
+                        <td class="border px-4 py-2">
+                            <input type="number" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" value="${item.amount}" onchange="updateTotal()">
+                        </td>
+                        <td class="border px-4 py-2">
+                            <input type="text" class="w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500" value="${item.note}" placeholder="備註">
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            // 更新總金額
+            window.updateTotal = function() {
+                const amountInputs = document.querySelectorAll('#salary-details input[type="number"]');
+                let total = 0;
+                
+                amountInputs.forEach(input => {
+                    if (input.value) {
+                        total += parseInt(input.value);
+                    }
+                });
+                
+                document.getElementById('total-amount').textContent = total.toLocaleString();
+            };
         });
-    }
-  </script>
-</body>
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94762eed941ade77',t:'MTc0ODUyMzcxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
